@@ -3,10 +3,24 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 
+// Process private key - handle both literal newlines and escaped \n
+const getPrivateKey = () => {
+  const key = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
+  if (!key) return undefined;
+  
+  // If the key contains literal \n, replace them with actual newlines
+  if (key.includes('\\n')) {
+    return key.replace(/\\n/g, '\n');
+  }
+  
+  // If it's already properly formatted, return as is
+  return key;
+};
+
 const firebaseAdminConfig = {
   projectId: process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-  privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  privateKey: getPrivateKey(),
 };
 
 // Initialize Firebase Admin only if credentials are available
