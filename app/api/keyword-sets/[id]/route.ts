@@ -32,7 +32,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete keyword set' }, { status: 500 });
   }
 }
-
-
-
-
