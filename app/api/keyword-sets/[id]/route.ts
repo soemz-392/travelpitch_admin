@@ -3,12 +3,13 @@ import { adminDb } from '@/lib/firebase-admin';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const data = await request.json();
+    const { id } = await params;
     
-    await adminDb.collection('keywordSets').doc(params.id).update(data);
+    await adminDb.collection('keywordSets').doc(id).update(data);
     
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -19,10 +20,11 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await adminDb.collection('keywordSets').doc(params.id).delete();
+    const { id } = await params;
+    await adminDb.collection('keywordSets').doc(id).delete();
     
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -300,7 +300,7 @@ export class TrackingLinkService {
    * @returns 국가 코드 배열
    */
   static getAllCountryCodes(): string[] {
-    return [...new Set(MARKETING_LINKS.map(link => link.countryCode))];
+     return Array.from(new Set(MARKETING_LINKS.map(link => link.countryCode)));
   }
 
   /**

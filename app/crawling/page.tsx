@@ -397,7 +397,7 @@ export default function CrawlingPage() {
                           </div>
                         </td>
                         <td className="table-cell">
-                          {result.capturedAt?.toDate ? result.capturedAt.toDate().toLocaleDateString() : new Date(result.capturedAt).toLocaleDateString()}
+                          {result.capturedAt?.toDate ? result.capturedAt.toDate().toLocaleDateString() : '날짜 없음'}
                         </td>
                         <td className="table-cell">
                           <button

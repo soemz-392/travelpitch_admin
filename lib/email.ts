@@ -8,7 +8,7 @@ export class EmailService {
 
   constructor() {
     // 이메일 서비스 설정 (SendGrid 또는 SES)
-    this.transporter = nodemailer.createTransporter({
+     this.transporter = nodemailer.createTransport({
       service: process.env.EMAIL_PROVIDER === 'sendgrid' ? 'SendGrid' : 'SES',
       auth: {
         user: process.env.EMAIL_PROVIDER === 'sendgrid' 

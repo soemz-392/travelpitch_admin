@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ExcelService } from '@/lib/excel';
 import { adminDb } from '@/lib/firebase-admin';
-import { SurveySubmission, ProductMapping } from '@/types';
+import { SurveySubmission, ProductMapping, DispatchBatch } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Batch not found' }, { status: 404 });
     }
 
-    const batch = { id: batchDoc.id, ...batchDoc.data() };
+    const batch = { id: batchDoc.id, ...batchDoc.data() } as DispatchBatch;
 
     // 설문 제출 데이터 조회
     const submissions: SurveySubmission[] = [];
@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
     headers.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     headers.set('Content-Disposition', `attachment; filename="dispatch_${batchId}.xlsx"`);
 
-    return new NextResponse(excelBuffer, { headers });
+    return new NextResponse(excelBuffer as any, { headers });
 
   } catch (error) {
     console.error('Excel download API error:', error);

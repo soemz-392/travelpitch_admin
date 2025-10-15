@@ -415,10 +415,10 @@ export default function DispatchPage() {
                           </span>
                         </td>
                         <td className="table-cell">
-                          {batch.createdAt?.toDate ? batch.createdAt.toDate().toLocaleDateString() : new Date(batch.createdAt).toLocaleDateString()}
+                          {batch.createdAt?.toDate ? batch.createdAt.toDate().toLocaleDateString() : '날짜 없음'}
                         </td>
                         <td className="table-cell">
-                          {batch.processedAt ? (batch.processedAt?.toDate ? batch.processedAt.toDate().toLocaleDateString() : new Date(batch.processedAt).toLocaleDateString()) : '-'}
+                          {batch.processedAt ? (batch.processedAt?.toDate ? batch.processedAt.toDate().toLocaleDateString() : '날짜 없음') : '-'}
                         </td>
                         <td className="table-cell">
                           <div className="flex space-x-2">

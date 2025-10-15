@@ -114,7 +114,7 @@ export class CrawlingService {
         const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
         const text = document.body.innerText;
         const matches = text.match(emailRegex);
-        return matches ? [...new Set(matches)] : [];
+         return matches ? Array.from(new Set(matches)) : [];
       });
 
       if (emails.length === 0) {
@@ -146,7 +146,7 @@ export class CrawlingService {
     // 3. 본문에서 발견된 이메일
     
     // 현재는 단순히 중복 제거만 수행
-    return [...new Set(emails)];
+     return Array.from(new Set(emails));
   }
 
   private generateDedupKey(url: string): string {

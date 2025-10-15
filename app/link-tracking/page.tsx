@@ -301,7 +301,7 @@ export default function LinkTrackingPage() {
                           {log.meta?.clickCount || 0}
                         </td>
                         <td className="table-cell">
-                          {log.ts?.toDate ? log.ts.toDate().toLocaleDateString() : new Date(log.ts).toLocaleDateString()}
+                          {log.ts?.toDate ? log.ts.toDate().toLocaleDateString() : '날짜 없음'}
                         </td>
                         <td className="table-cell">
                           <div className="flex space-x-2">

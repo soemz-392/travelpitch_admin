@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     console.error('Data cleanup API error:', error);
     return NextResponse.json({ 
       error: 'Internal server error',
-      message: error.message 
+      message: error instanceof Error ? error.message : 'Unknown error' 
     }, { status: 500 });
   }
 }

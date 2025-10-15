@@ -159,14 +159,14 @@ export default function SurveyPage() {
 
   const getStatusColor = (submission: SurveySubmission) => {
     if (!submission.adDisclosureAgree) return 'status-error';
-    const startDate = submission.desiredStartDate?.toLocaleDateString ? submission.desiredStartDate : new Date(submission.desiredStartDate);
+     const startDate = submission.desiredStartDate instanceof Date ? submission.desiredStartDate : new Date(submission.desiredStartDate);
     if (startDate < new Date()) return 'status-warning';
     return 'status-success';
   };
 
   const getStatusText = (submission: SurveySubmission) => {
     if (!submission.adDisclosureAgree) return '광고성 표기 미동의';
-    const startDate = submission.desiredStartDate?.toLocaleDateString ? submission.desiredStartDate : new Date(submission.desiredStartDate);
+     const startDate = submission.desiredStartDate instanceof Date ? submission.desiredStartDate : new Date(submission.desiredStartDate);
     if (startDate < new Date()) return '개통일 지남';
     return '정상';
   };
@@ -281,7 +281,7 @@ export default function SurveyPage() {
                           </span>
                         </td>
                         <td className="table-cell">
-                          {submission.createdAt?.toDate ? submission.createdAt.toDate().toLocaleDateString() : (submission.createdAt._seconds ? new Date(submission.createdAt._seconds * 1000).toLocaleDateString() : new Date().toLocaleDateString())}
+                          {submission.createdAt?.toDate ? submission.createdAt.toDate().toLocaleDateString() : '날짜 없음'}
                         </td>
                         <td className="table-cell">
                           <button
@@ -413,7 +413,7 @@ export default function SurveyPage() {
                             <div>
                               <label className="block text-sm font-medium text-gray-700">제출일</label>
                               <p className="mt-1 text-sm text-gray-900">
-                                {submission.createdAt?.toDate ? submission.createdAt.toDate().toLocaleDateString() : (submission.createdAt._seconds ? new Date(submission.createdAt._seconds * 1000).toLocaleDateString() : new Date().toLocaleDateString())}
+                                {submission.createdAt?.toDate ? submission.createdAt.toDate().toLocaleDateString() : '날짜 없음'}
                               </p>
                             </div>
                           </div>

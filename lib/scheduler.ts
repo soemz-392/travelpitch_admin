@@ -80,7 +80,7 @@ export class SchedulerService {
       await adminDb.collection('jobLogs').add({
         jobType: 'weekly_crawling',
         status: 'failed',
-        error: error.message,
+         error: error instanceof Error ? error.message : 'Unknown error',
         startedAt: new Date(),
         failedAt: new Date(),
       });
@@ -174,7 +174,7 @@ export class SchedulerService {
       await adminDb.collection('jobLogs').add({
         jobType: 'weekly_reminder',
         status: 'failed',
-        error: error.message,
+         error: error instanceof Error ? error.message : 'Unknown error',
         failedAt: new Date(),
       });
 
@@ -235,7 +235,7 @@ export class SchedulerService {
       await adminDb.collection('jobLogs').add({
         jobType: 'data_cleanup',
         status: 'failed',
-        error: error.message,
+         error: error instanceof Error ? error.message : 'Unknown error',
         failedAt: new Date(),
       });
 
