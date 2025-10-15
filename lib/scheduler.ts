@@ -19,7 +19,7 @@ export class SchedulerService {
       }
 
       const keywordSets: KeywordSet[] = [];
-      keywordSetsSnapshot.forEach(doc => {
+      keywordSetsSnapshot.forEach((doc: any) => {
         keywordSets.push({ id: doc.id, ...doc.data() } as KeywordSet);
       });
 
@@ -197,7 +197,7 @@ export class SchedulerService {
 
       if (!oldCrawlResultsSnapshot.empty) {
         const batch = adminDb.batch();
-        oldCrawlResultsSnapshot.forEach(doc => {
+        oldCrawlResultsSnapshot.forEach((doc: any) => {
           batch.delete(doc.ref);
         });
         await batch.commit();
@@ -212,7 +212,7 @@ export class SchedulerService {
 
       if (!oldJobLogsSnapshot.empty) {
         const batch = adminDb.batch();
-        oldJobLogsSnapshot.forEach(doc => {
+        oldJobLogsSnapshot.forEach((doc: any) => {
           batch.delete(doc.ref);
         });
         await batch.commit();

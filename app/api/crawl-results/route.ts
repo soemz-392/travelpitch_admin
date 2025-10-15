@@ -6,7 +6,7 @@ export async function GET() {
     const crawlResultsSnapshot = await adminDb.collection('crawlResults').orderBy('capturedAt', 'desc').limit(50).get();
     const crawlResults: any[] = [];
     
-    crawlResultsSnapshot.forEach(doc => {
+    crawlResultsSnapshot.forEach((doc: any) => {
       crawlResults.push({ id: doc.id, ...doc.data() });
     });
 

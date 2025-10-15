@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     // 상품 매핑 데이터 조회
     const mappingsSnapshot = await adminDb.collection('productMappings').get();
     const mappings: ProductMapping[] = [];
-    mappingsSnapshot.forEach(doc => {
+    mappingsSnapshot.forEach((doc: any) => {
       mappings.push({ id: doc.id, ...doc.data() } as ProductMapping);
     });
 
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
     // 상품 매핑 데이터 조회
     const mappingsSnapshot = await adminDb.collection('productMappings').get();
     const mappings: ProductMapping[] = [];
-    mappingsSnapshot.forEach(doc => {
+    mappingsSnapshot.forEach((doc: any) => {
       mappings.push({ id: doc.id, ...doc.data() } as ProductMapping);
     });
 

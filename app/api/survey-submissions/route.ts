@@ -49,7 +49,7 @@ export async function GET() {
     const submissionsSnapshot = await adminDb.collection('surveySubmissions').orderBy('createdAt', 'desc').get();
     const submissions: any[] = [];
     
-    submissionsSnapshot.forEach(doc => {
+    submissionsSnapshot.forEach((doc: any) => {
       submissions.push({ id: doc.id, ...doc.data() });
     });
 

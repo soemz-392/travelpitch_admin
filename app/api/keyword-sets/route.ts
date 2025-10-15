@@ -6,7 +6,7 @@ export async function GET() {
     const keywordSetsSnapshot = await adminDb.collection('keywordSets').get();
     const keywordSets: any[] = [];
     
-    keywordSetsSnapshot.forEach(doc => {
+    keywordSetsSnapshot.forEach((doc: any) => {
       keywordSets.push({ id: doc.id, ...doc.data() });
     });
 
