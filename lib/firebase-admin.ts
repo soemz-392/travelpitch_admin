@@ -1,6 +1,6 @@
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth';
+import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
+import { getFirestore, Firestore } from 'firebase-admin/firestore';
+import { getAuth, Auth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 
 // Process private key - handle both literal newlines and escaped \n
@@ -17,30 +17,67 @@ const getPrivateKey = () => {
   return key;
 };
 
-const firebaseAdminConfig = {
-  projectId: process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-  privateKey: getPrivateKey(),
-};
+// Lazy initialization function
+let adminApp: App | null = null;
+let adminDbInstance: Firestore | null = null;
+let adminAuthInstance: Auth | null = null;
+let adminStorageInstance: any = null;
 
-// Initialize Firebase Admin only if credentials are available
-let adminApp;
-if (firebaseAdminConfig.projectId && firebaseAdminConfig.clientEmail && firebaseAdminConfig.privateKey) {
-  adminApp = getApps().length === 0 
-    ? initializeApp({
+function initializeFirebaseAdmin() {
+  if (adminApp) return adminApp;
+  
+  const firebaseAdminConfig = {
+    projectId: process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+    privateKey: getPrivateKey(),
+  };
+
+  // Only initialize if all credentials are available
+  if (firebaseAdminConfig.projectId && firebaseAdminConfig.clientEmail && firebaseAdminConfig.privateKey) {
+    if (getApps().length === 0) {
+      adminApp = initializeApp({
         credential: cert(firebaseAdminConfig),
         projectId: firebaseAdminConfig.projectId,
-      })
-    : getApps()[0];
-} else {
-  // For build time when env vars might not be available
-  adminApp = getApps()[0] || null;
+      });
+    } else {
+      adminApp = getApps()[0];
+    }
+    
+    adminDbInstance = getFirestore(adminApp);
+    adminAuthInstance = getAuth(adminApp);
+    adminStorageInstance = getStorage(adminApp);
+  }
+  
+  return adminApp;
 }
 
-// Initialize Firebase Admin services
-export const adminDb = adminApp ? getFirestore(adminApp) : null as any;
-export const adminAuth = adminApp ? getAuth(adminApp) : null as any;
-export const adminStorage = adminApp ? getStorage(adminApp) : null as any;
+// Export getters that initialize on first use
+export const adminDb = new Proxy({} as Firestore, {
+  get(target, prop) {
+    if (!adminDbInstance) {
+      initializeFirebaseAdmin();
+    }
+    return adminDbInstance ? (adminDbInstance as any)[prop] : undefined;
+  }
+});
+
+export const adminAuth = new Proxy({} as Auth, {
+  get(target, prop) {
+    if (!adminAuthInstance) {
+      initializeFirebaseAdmin();
+    }
+    return adminAuthInstance ? (adminAuthInstance as any)[prop] : undefined;
+  }
+});
+
+export const adminStorage = new Proxy({} as any, {
+  get(target, prop) {
+    if (!adminStorageInstance) {
+      initializeFirebaseAdmin();
+    }
+    return adminStorageInstance ? adminStorageInstance[prop] : undefined;
+  }
+});
 
 export default adminApp;
 
