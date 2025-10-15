@@ -1,0 +1,36 @@
+국가코드,국가명,SIM종류,상품명,기본URL,상품ID
+EU,유럽,usim,유럽 유심,https://smartstore.naver.com/usimstore,eu-usim
+EU,유럽,esim,유럽 eSIM,https://smartstore.naver.com/usimstore,eu-esim
+VN,베트남,usim,베트남 유심,https://smartstore.naver.com/usimstore,vn-usim
+VN,베트남,esim,베트남 eSIM,https://smartstore.naver.com/usimstore,vn-esim
+TH,태국,usim,태국 유심,https://smartstore.naver.com/usimstore,th-usim
+TH,태국,esim,태국 eSIM,https://smartstore.naver.com/usimstore,th-esim
+JP,일본,usim,일본 유심,https://smartstore.naver.com/usimstore,jp-usim
+JP,일본,esim,일본 eSIM,https://smartstore.naver.com/usimstore,jp-esim
+US,미국,usim,미국 유심,https://smartstore.naver.com/usimstore,us-usim
+US,미국,esim,미국 eSIM,https://smartstore.naver.com/usimstore,us-esim
+CN,중국,usim,중국 유심,https://smartstore.naver.com/usimstore,cn-usim
+CN,중국,esim,중국 eSIM,https://smartstore.naver.com/usimstore,cn-esim
+TW,대만,usim,대만 유심,https://smartstore.naver.com/usimstore,tw-usim
+TW,대만,esim,대만 eSIM,https://smartstore.naver.com/usimstore,tw-esim
+PH,필리핀,usim,필리핀 유심,https://smartstore.naver.com/usimstore,ph-usim
+PH,필리핀,esim,필리핀 eSIM,https://smartstore.naver.com/usimstore,ph-esim
+ID,인도네시아,usim,인도네시아 유심,https://smartstore.naver.com/usimstore,id-usim
+ID,인도네시아,esim,인도네시아 eSIM,https://smartstore.naver.com/usimstore,id-esim
+MY,말레이시아,usim,말레이시아 유심,https://smartstore.naver.com/usimstore,my-usim
+MY,말레이시아,esim,말레이시아 eSIM,https://smartstore.naver.com/usimstore,my-esim
+HK,홍콩마카오,usim,홍콩마카오 유심,https://smartstore.naver.com/usimstore,hk-usim
+HK,홍콩마카오,esim,홍콩마카오 eSIM,https://smartstore.naver.com/usimstore,hk-esim
+AU,호주,usim,호주 유심,https://smartstore.naver.com/usimstore,au-usim
+AU,호주,esim,호주 eSIM,https://smartstore.naver.com/usimstore,au-esim
+SG,싱가포르,usim,싱가포르 유심,https://smartstore.naver.com/usimstore,sg-usim
+SG,싱가포르,esim,싱가포르 eSIM,https://smartstore.naver.com/usimstore,sg-esim
+IN,인도,usim,인도 유심,https://smartstore.naver.com/usimstore,in-usim
+IN,인도,esim,인도 eSIM,https://smartstore.naver.com/usimstore,in-esim
+LA,라오스,usim,라오스 유심,https://smartstore.naver.com/usimstore,la-usim
+LA,라오스,esim,라오스 eSIM,https://smartstore.naver.com/usimstore,la-esim
+ETC,기타,usim,기타 유심,https://smartstore.naver.com/usimstore,etc-usim
+ETC,기타,esim,기타 eSIM,https://smartstore.naver.com/usimstore,etc-esim
+
+
+
