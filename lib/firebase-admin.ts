@@ -3,12 +3,10 @@ import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { getAuth, Auth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 
-// Check if we're in build phase
-const isBuildPhase = typeof window === 'undefined' && (
+// Check if we're in build phase (only during actual build, not runtime)
+const isBuildPhase = 
   process.env.NEXT_PHASE === 'phase-production-build' ||
-  process.env.npm_lifecycle_event === 'build' ||
-  !process.env.FIREBASE_ADMIN_PRIVATE_KEY
-);
+  process.env.npm_lifecycle_event === 'build';
 
 // Process private key - handle both literal newlines and escaped \n
 const getPrivateKey = () => {
@@ -47,6 +45,17 @@ function initializeFirebaseAdmin() {
     privateKey: getPrivateKey(),
   };
 
+  // Log what's missing for debugging
+  if (!firebaseAdminConfig.projectId) {
+    console.error('Missing FIREBASE_ADMIN_PROJECT_ID or NEXT_PUBLIC_FIREBASE_PROJECT_ID');
+  }
+  if (!firebaseAdminConfig.clientEmail) {
+    console.error('Missing FIREBASE_ADMIN_CLIENT_EMAIL');
+  }
+  if (!firebaseAdminConfig.privateKey) {
+    console.error('Missing FIREBASE_ADMIN_PRIVATE_KEY');
+  }
+
   // Only initialize if all credentials are available and valid
   if (firebaseAdminConfig.projectId && 
       firebaseAdminConfig.clientEmail && 
@@ -58,6 +67,7 @@ function initializeFirebaseAdmin() {
           credential: cert(firebaseAdminConfig),
           projectId: firebaseAdminConfig.projectId,
         });
+        console.log('Firebase Admin initialized successfully');
       } else {
         adminApp = getApps()[0];
       }
@@ -70,7 +80,13 @@ function initializeFirebaseAdmin() {
       return null;
     }
   } else {
-    console.log('Firebase Admin credentials not available or invalid, using mock implementation');
+    console.error('Firebase Admin credentials not available or invalid - using mock implementation');
+    console.error('Environment check:', {
+      hasProjectId: !!firebaseAdminConfig.projectId,
+      hasClientEmail: !!firebaseAdminConfig.clientEmail,
+      hasPrivateKey: !!firebaseAdminConfig.privateKey,
+      privateKeyLength: firebaseAdminConfig.privateKey?.length || 0,
+    });
   }
   
   return adminApp;
