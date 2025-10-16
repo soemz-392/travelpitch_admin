@@ -3,25 +3,35 @@
 import { useState, useEffect } from 'react';
 import AuthGuard from '@/components/AuthGuard';
 import MainLayout from '@/components/Layout/MainLayout';
-import { KeywordSet, CrawlResult } from '@/types';
+import { KeywordSet, CrawlResult, Influencer } from '@/types';
 import {
   PlusIcon,
   PlayIcon,
   PauseIcon,
   TrashIcon,
   EyeIcon,
+  UserPlusIcon,
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
 export default function CrawlingPage() {
   const [keywordSets, setKeywordSets] = useState<KeywordSet[]>([]);
   const [crawlResults, setCrawlResults] = useState<CrawlResult[]>([]);
+  const [influencers, setInfluencers] = useState<Influencer[]>([]);
   const [loading, setLoading] = useState(true);
   const [showKeywordForm, setShowKeywordForm] = useState(false);
+  const [showInfluencerForm, setShowInfluencerForm] = useState(false);
   const [newKeywordSet, setNewKeywordSet] = useState({
     name: '',
     country: '',
     keywords: '',
+  });
+  const [newInfluencer, setNewInfluencer] = useState({
+    name: '',
+    email: '',
+    blogUrl: '',
+    country: '',
+    tags: '',
   });
 
   useEffect(() => {
@@ -77,6 +87,13 @@ export default function CrawlingPage() {
             dedupKey: 'blog.naver.com/example2',
           },
         ]);
+      }
+
+      // 인플루언서 로딩
+      const influencerResponse = await fetch('/api/influencers');
+      if (influencerResponse.ok) {
+        const influencersData = await influencerResponse.json();
+        setInfluencers(influencersData);
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -190,6 +207,40 @@ export default function CrawlingPage() {
       }
     } catch (error) {
       toast.error('크롤링 시작 실패');
+    }
+  };
+
+  const handleCreateInfluencer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const tags = newInfluencer.tags.split(',').map(t => t.trim()).filter(t => t);
+      
+      const response = await fetch('/api/influencers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newInfluencer.name,
+          email: newInfluencer.email,
+          blogUrl: newInfluencer.blogUrl,
+          country: newInfluencer.country,
+          tags,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setInfluencers([result.influencer, ...influencers]);
+        setNewInfluencer({ name: '', email: '', blogUrl: '', country: '', tags: '' });
+        setShowInfluencerForm(false);
+        toast.success('인플루언서가 추가되었습니다.');
+      } else {
+        const error = await response.json();
+        toast.error(error.error || '인플루언서 추가 실패');
+      }
+    } catch (error) {
+      toast.error('인플루언서 추가 실패');
     }
   };
 
@@ -409,6 +460,166 @@ export default function CrawlingPage() {
                         </td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* 인플루언서 수동 추가 */}
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  인플루언서 관리
+                </h3>
+                <button
+                  onClick={() => setShowInfluencerForm(true)}
+                  className="btn-primary flex items-center"
+                >
+                  <UserPlusIcon className="h-4 w-4 mr-2" />
+                  인플루언서 추가
+                </button>
+              </div>
+
+              {showInfluencerForm && (
+                <form onSubmit={handleCreateInfluencer} className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        이름
+                      </label>
+                      <input
+                        type="text"
+                        value={newInfluencer.name}
+                        onChange={(e) => setNewInfluencer({ ...newInfluencer, name: e.target.value })}
+                        className="input-field"
+                        placeholder="예: 홍길동"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        이메일 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        value={newInfluencer.email}
+                        onChange={(e) => setNewInfluencer({ ...newInfluencer, email: e.target.value })}
+                        className="input-field"
+                        placeholder="예: example@naver.com"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        SNS 주소 (블로그 URL) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="url"
+                        value={newInfluencer.blogUrl}
+                        onChange={(e) => setNewInfluencer({ ...newInfluencer, blogUrl: e.target.value })}
+                        className="input-field"
+                        placeholder="예: https://blog.naver.com/example"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        국가 코드
+                      </label>
+                      <input
+                        type="text"
+                        value={newInfluencer.country}
+                        onChange={(e) => setNewInfluencer({ ...newInfluencer, country: e.target.value })}
+                        className="input-field"
+                        placeholder="예: KR, JP, US"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        태그 (쉼표로 구분)
+                      </label>
+                      <input
+                        type="text"
+                        value={newInfluencer.tags}
+                        onChange={(e) => setNewInfluencer({ ...newInfluencer, tags: e.target.value })}
+                        className="input-field"
+                        placeholder="예: 여행, 유심, 리뷰"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-2 mt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowInfluencerForm(false)}
+                      className="btn-secondary"
+                    >
+                      취소
+                    </button>
+                    <button type="submit" className="btn-primary">
+                      추가
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              <div className="overflow-hidden">
+                <table className="table">
+                  <thead className="table-header">
+                    <tr>
+                      <th className="table-header-cell">이름</th>
+                      <th className="table-header-cell">이메일</th>
+                      <th className="table-header-cell">SNS 주소</th>
+                      <th className="table-header-cell">국가</th>
+                      <th className="table-header-cell">태그</th>
+                      <th className="table-header-cell">등록일</th>
+                    </tr>
+                  </thead>
+                  <tbody className="table-body">
+                    {influencers.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="table-cell text-center text-gray-500">
+                          등록된 인플루언서가 없습니다. 위 버튼을 클릭하여 추가해주세요.
+                        </td>
+                      </tr>
+                    ) : (
+                      influencers.map((influencer) => (
+                        <tr key={influencer.id}>
+                          <td className="table-cell font-medium">{influencer.name || '-'}</td>
+                          <td className="table-cell">{influencer.email}</td>
+                          <td className="table-cell">
+                            <a
+                              href={influencer.blogUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-900 truncate max-w-xs block"
+                            >
+                              {influencer.blogUrl}
+                            </a>
+                          </td>
+                          <td className="table-cell">{influencer.country || '-'}</td>
+                          <td className="table-cell">
+                            <div className="flex flex-wrap gap-1">
+                              {influencer.tags && influencer.tags.length > 0 ? (
+                                influencer.tags.map((tag, index) => (
+                                  <span
+                                    key={index}
+                                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="table-cell">
+                            {influencer.createdAt?.toDate ? influencer.createdAt.toDate().toLocaleDateString() : '날짜 없음'}
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
