@@ -65,41 +65,45 @@ export class CrawlingService {
     const seenUrls = new Set<string>();
 
     try {
-      for (const keyword of keywordSet.keywords) {
-        // 구글 검색으로 네이버 블로그 찾기
-        const searchQuery = `site:blog.naver.com ${keyword}`;
-        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}&num=20`;
-        
-        await this.page.goto(searchUrl, { waitUntil: 'networkidle2' });
-        await sleep(3000);
+      // 모든 키워드를 조합하여 한 번에 검색
+      const allKeywords = keywordSet.keywords.join(' ');
+      const searchQuery = `site:blog.naver.com ${allKeywords}`;
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}&num=50`;
+      
+      console.log(`Searching with query: ${searchQuery}`);
+      
+      await this.page.goto(searchUrl, { waitUntil: 'networkidle2' });
+      await sleep(3000);
 
-        // 블로그 URL 추출
-        const blogUrls = await this.page.evaluate(() => {
-          const links = document.querySelectorAll('a[href*="blog.naver.com"]');
-          return Array.from(links).map(link => {
-            const href = link.getAttribute('href');
-            if (href && href.includes('/url?q=')) {
-              // 구글 검색 결과에서 실제 URL 추출
-              const urlMatch = href.match(/\/url\?q=([^&]+)/);
-              return urlMatch ? decodeURIComponent(urlMatch[1]) : href;
-            }
-            return href;
-          }).filter(url => url && url.includes('blog.naver.com'));
-        });
-
-        // 각 블로그에서 이메일 추출
-        for (const url of blogUrls.slice(0, 10)) { // 상위 10개만 처리
-          if (seenUrls.has(url)) continue;
-          seenUrls.add(url);
-
-          try {
-            const result = await this.extractEmailFromBlog(url);
-            if (result) {
-              results.push(result);
-            }
-          } catch (error) {
-            console.error(`Failed to extract email from ${url}:`, error);
+      // 블로그 URL 추출
+      const blogUrls = await this.page.evaluate(() => {
+        const links = document.querySelectorAll('a[href*="blog.naver.com"]');
+        return Array.from(links).map(link => {
+          const href = link.getAttribute('href');
+          if (href && href.includes('/url?q=')) {
+            // 구글 검색 결과에서 실제 URL 추출
+            const urlMatch = href.match(/\/url\?q=([^&]+)/);
+            return urlMatch ? decodeURIComponent(urlMatch[1]) : href;
           }
+          return href;
+        }).filter(url => url && url.includes('blog.naver.com'));
+      });
+
+      console.log(`Found ${blogUrls.length} blog URLs`);
+
+      // 각 블로그에서 이메일 추출 (상위 50개)
+      for (const url of blogUrls.slice(0, 50)) {
+        if (seenUrls.has(url)) continue;
+        seenUrls.add(url);
+
+        try {
+          const result = await this.extractEmailFromBlog(url);
+          if (result) {
+            results.push(result);
+            console.log(`Extracted email from: ${url}`);
+          }
+        } catch (error) {
+          console.error(`Failed to extract email from ${url}:`, error);
         }
       }
     } catch (error) {
