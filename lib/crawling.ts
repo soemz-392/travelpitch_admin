@@ -3,6 +3,9 @@ import { KeywordSet, CrawlResult } from '@/types';
 // Vercel 환경 감지
 const isVercel = !!process.env.VERCEL || process.env.NODE_ENV === 'production';
 
+// waitForTimeout 대체 헬퍼 함수
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export class CrawlingService {
   private browser: any;
   private page: any;
@@ -68,7 +71,7 @@ export class CrawlingService {
         const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}&num=20`;
         
         await this.page.goto(searchUrl, { waitUntil: 'networkidle2' });
-        await this.page.waitForTimeout(3000);
+        await sleep(3000);
 
         // 블로그 URL 추출
         const blogUrls = await this.page.evaluate(() => {
@@ -131,7 +134,7 @@ export class CrawlingService {
   private async extractEmailFromBlog(url: string): Promise<CrawlResult | null> {
     try {
       await this.page.goto(url, { waitUntil: 'networkidle2' });
-      await this.page.waitForTimeout(1000);
+      await sleep(1000);
 
       // 페이지 제목 추출
       const title = await this.page.title();
