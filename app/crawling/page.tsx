@@ -237,10 +237,15 @@ export default function CrawlingPage() {
         toast.success('인플루언서가 추가되었습니다.');
       } else {
         const error = await response.json();
-        toast.error(error.error || '인플루언서 추가 실패');
+        console.error('API Error:', error);
+        const errorMessage = error.details 
+          ? `${error.error}: ${error.details}` 
+          : error.error || '인플루언서 추가 실패';
+        toast.error(errorMessage);
       }
     } catch (error) {
-      toast.error('인플루언서 추가 실패');
+      console.error('Failed to create influencer:', error);
+      toast.error('인플루언서 추가 실패: 네트워크 오류');
     }
   };
 
