@@ -19,12 +19,32 @@ export async function POST(request: NextRequest) {
     console.log('Starting crawling for keyword set:', keywordSetId);
 
     // 키워드 세트 조회
-    const keywordSetDoc = await adminDb.collection('keywordSets').doc(keywordSetId).get();
-    if (!keywordSetDoc.exists) {
-      return NextResponse.json({ error: 'Keyword set not found' }, { status: 404 });
-    }
+    let keywordSet: KeywordSet;
+    try {
+      const keywordSetDoc = await adminDb.collection('keywordSets').doc(keywordSetId).get();
+      console.log('KeywordSet document exists:', keywordSetDoc.exists);
+      
+      if (!keywordSetDoc.exists) {
+        // 모든 키워드 세트 조회해서 디버깅
+        const allSets = await adminDb.collection('keywordSets').get();
+        console.log('Available keyword sets:', allSets.docs.map(d => ({ id: d.id, name: d.data().name })));
+        
+        return NextResponse.json({ 
+          error: 'Keyword set not found',
+          requestedId: keywordSetId,
+          availableIds: allSets.docs.map(d => d.id)
+        }, { status: 404 });
+      }
 
-    const keywordSet = { id: keywordSetDoc.id, ...keywordSetDoc.data() } as KeywordSet;
+      keywordSet = { id: keywordSetDoc.id, ...keywordSetDoc.data() } as KeywordSet;
+      console.log('Found keyword set:', keywordSet.name, 'with', keywordSet.keywords.length, 'keywords');
+    } catch (dbError) {
+      console.error('Database error while fetching keyword set:', dbError);
+      return NextResponse.json({ 
+        error: 'Database error',
+        details: (dbError as any)?.message || 'Failed to access database'
+      }, { status: 500 });
+    }
 
     // 크롤링 실행
     const crawlingService = new CrawlingService();
