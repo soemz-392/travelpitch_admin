@@ -4,6 +4,10 @@ import { adminDb } from '@/lib/firebase-admin';
 import { KeywordSet, CrawlResult } from '@/types';
 import * as admin from 'firebase-admin';
 
+// Vercel Function 설정: 메모리와 실행 시간 증가
+export const maxDuration = 60; // 최대 60초
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const { keywordSetId } = await request.json();
@@ -12,12 +16,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Keyword set ID is required' }, { status: 400 });
     }
 
-    // Vercel Serverless Functions에서는 Puppeteer가 작동하지 않음
-    // 임시로 기능 비활성화
-    return NextResponse.json({ 
-      error: '크롤링 기능은 현재 비활성화되어 있습니다. 인플루언서 관리 섹션에서 수동으로 추가해주세요.',
-      message: 'Crawling feature is currently disabled on Vercel. Please use manual influencer addition.',
-    }, { status: 503 });
+    console.log('Starting crawling for keyword set:', keywordSetId);
 
     // 키워드 세트 조회
     const keywordSetDoc = await adminDb.collection('keywordSets').doc(keywordSetId).get();

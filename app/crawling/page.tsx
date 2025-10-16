@@ -273,22 +273,6 @@ export default function CrawlingPage() {
     <AuthGuard>
       <MainLayout title="크롤링 관리" subtitle="키워드 세트 및 크롤링 결과 관리">
         <div className="space-y-6">
-          {/* 크롤링 기능 안내 */}
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-yellow-700">
-                  <strong>안내:</strong> 자동 크롤링 기능은 현재 비활성화되어 있습니다. 아래 <strong>"인플루언서 관리"</strong> 섹션에서 수동으로 인플루언서를 추가해주세요.
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* 키워드 세트 관리 */}
           <div className="bg-white shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
@@ -400,9 +384,8 @@ export default function CrawlingPage() {
                           <div className="flex space-x-2">
                             <button
                               onClick={() => handleRunCrawling(set.id)}
-                              className="text-gray-400 cursor-not-allowed"
-                              title="크롤링 기능 비활성화 (Vercel 제한)"
-                              disabled
+                              className="text-blue-600 hover:text-blue-900"
+                              title="크롤링 실행"
                             >
                               <PlayIcon className="h-4 w-4" />
                             </button>

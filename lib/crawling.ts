@@ -1,15 +1,33 @@
-import puppeteer from 'puppeteer';
 import { KeywordSet, CrawlResult } from '@/types';
+
+// Vercel 환경 감지
+const isVercel = !!process.env.VERCEL || process.env.NODE_ENV === 'production';
 
 export class CrawlingService {
   private browser: any;
   private page: any;
 
   async initialize() {
-    this.browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    if (isVercel) {
+      // Vercel 환경: puppeteer-core + chromium 사용
+      const puppeteerCore = require('puppeteer-core');
+      const chromium = require('@sparticuz/chromium');
+
+      this.browser = await puppeteerCore.launch({
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath(),
+        headless: chromium.headless,
+      });
+    } else {
+      // 로컬 환경: 일반 puppeteer 사용
+      const puppeteer = require('puppeteer');
+      this.browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+    }
+    
     this.page = await this.browser.newPage();
     await this.page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
   }
@@ -21,15 +39,11 @@ export class CrawlingService {
   }
 
   async crawlGoogleBlogs(keywordSet: KeywordSet): Promise<CrawlResult[]> {
-    // 로컬 환경에서는 샘플 데이터 반환
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Development mode: returning sample data');
-      return this.getSampleResults(keywordSet);
-    }
-
     if (!this.page) {
       await this.initialize();
     }
+
+    console.log(`Starting crawl for keyword set: ${keywordSet.name}`);
 
     const results: CrawlResult[] = [];
     const seenUrls = new Set<string>();
@@ -74,10 +88,10 @@ export class CrawlingService {
       }
     } catch (error) {
       console.error('Crawling error:', error);
-      // 오류 시에도 샘플 데이터 반환
-      return this.getSampleResults(keywordSet);
+      throw error;
     }
 
+    console.log(`Crawling completed. Found ${results.length} results.`);
     return results;
   }
 
