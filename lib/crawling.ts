@@ -8,28 +8,41 @@ export class CrawlingService {
   private page: any;
 
   async initialize() {
-    if (isVercel) {
-      // Vercel 환경: puppeteer-core + chromium 사용
-      const puppeteerCore = require('puppeteer-core');
-      const chromium = require('@sparticuz/chromium');
+    try {
+      console.log('Initializing CrawlingService, isVercel:', isVercel);
+      
+      if (isVercel) {
+        // Vercel 환경: puppeteer-core + chromium 사용
+        console.log('Using Vercel environment setup');
+        const puppeteerCore = await import('puppeteer-core');
+        const chromium = await import('@sparticuz/chromium');
 
-      this.browser = await puppeteerCore.launch({
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath(),
-        headless: chromium.headless,
-      });
-    } else {
-      // 로컬 환경: 일반 puppeteer 사용
-      const puppeteer = require('puppeteer');
-      this.browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      });
+        const executablePath = await chromium.default.executablePath();
+        console.log('Chromium executablePath:', executablePath);
+
+        this.browser = await puppeteerCore.default.launch({
+          args: [...chromium.default.args, '--no-sandbox', '--disable-setuid-sandbox'],
+          executablePath,
+          headless: true,
+        });
+      } else {
+        // 로컬 환경: 일반 puppeteer 사용
+        console.log('Using local environment setup');
+        const puppeteer = await import('puppeteer');
+        this.browser = await puppeteer.default.launch({
+          headless: true,
+          args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        });
+      }
+      
+      console.log('Browser launched successfully');
+      this.page = await this.browser.newPage();
+      await this.page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+      console.log('CrawlingService initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize CrawlingService:', error);
+      throw error;
     }
-    
-    this.page = await this.browser.newPage();
-    await this.page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
   }
 
   async close() {

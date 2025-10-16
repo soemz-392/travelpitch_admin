@@ -189,6 +189,8 @@ export default function CrawlingPage() {
 
   const handleRunCrawling = async (keywordSetId: string) => {
     try {
+      toast.loading('크롤링 실행 중...', { id: 'crawling' });
+      
       const response = await fetch('/api/crawling/run', {
         method: 'POST',
         headers: {
@@ -199,15 +201,20 @@ export default function CrawlingPage() {
 
       if (response.ok) {
         const result = await response.json();
-        toast.success(`크롤링이 완료되었습니다. ${result.resultsCount}개 결과를 찾았습니다.`);
+        toast.success(`크롤링이 완료되었습니다. ${result.resultsCount}개 결과를 찾았습니다.`, { id: 'crawling' });
         // 데이터 새로고침
         fetchData();
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || '크롤링 시작 실패');
+        console.error('Crawling error:', errorData);
+        const errorMsg = errorData.details 
+          ? `${errorData.error}: ${errorData.details}` 
+          : errorData.error || '크롤링 시작 실패';
+        toast.error(errorMsg, { id: 'crawling' });
       }
     } catch (error) {
-      toast.error('크롤링 시작 실패');
+      console.error('Crawling request failed:', error);
+      toast.error('크롤링 시작 실패: 네트워크 오류', { id: 'crawling' });
     }
   };
 
