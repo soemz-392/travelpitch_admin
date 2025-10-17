@@ -108,8 +108,7 @@ export default function CrawlingPage() {
     try {
       const keywords = newKeywordSet.keywords.split(',').map(k => k.trim()).filter(k => k);
       
-      const newSet: KeywordSet = {
-        id: Date.now().toString(),
+      const keywordSetData = {
         name: newKeywordSet.name,
         country: newKeywordSet.country,
         keywords,
@@ -124,11 +123,13 @@ export default function CrawlingPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newSet),
+        body: JSON.stringify(keywordSetData),
       });
 
       if (response.ok) {
-        setKeywordSets([...keywordSets, newSet]);
+        const savedKeywordSet = await response.json();
+        console.log('Created keyword set with ID:', savedKeywordSet.id);
+        setKeywordSets([...keywordSets, savedKeywordSet]);
         setNewKeywordSet({ name: '', country: '', keywords: '' });
         setShowKeywordForm(false);
         toast.success('키워드 세트가 생성되었습니다.');
