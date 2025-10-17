@@ -41,12 +41,12 @@
 
 ## 기술 스택
 
-- **프론트엔드**: Next.js 14, React, TailwindCSS
+- **프론트엔드**: Next.js 15, React, TailwindCSS
 - **백엔드**: Firebase (Auth, Firestore, Storage)
-- **이메일**: SendGrid 또는 Amazon SES
-- **크롤링**: Puppeteer
+- **이메일**: 네이버 메일, SendGrid, 또는 Amazon SES
+- **크롤링**: 네이버 검색 API
 - **스케줄러**: Cloud Scheduler
-- **배포**: Vercel (프론트), Cloud Run (백엔드)
+- **배포**: Vercel
 
 ## 설치 및 실행
 
@@ -90,12 +90,30 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
 ```
 
 ### 이메일 서비스 설정
+
+**네이버 메일 (권장, 무료):**
+```env
+EMAIL_PROVIDER=naver
+NAVER_EMAIL=your-email@naver.com
+NAVER_EMAIL_PASSWORD=your-app-password
+FROM_EMAIL=your-email@naver.com
 ```
+> 📖 **설정 방법**: [네이버 메일 연동 가이드](docs/NAVER_EMAIL_SETUP.md) 참고
+
+**SendGrid (대량 발송):**
+```env
 EMAIL_PROVIDER=sendgrid
 SENDGRID_API_KEY=your-sendgrid-api-key
+FROM_EMAIL=noreply@yourdomain.com
+```
+
+**AWS SES (기업용):**
+```env
+EMAIL_PROVIDER=ses
 SES_REGION=us-east-1
 SES_ACCESS_KEY_ID=your-ses-access-key
 SES_SECRET_ACCESS_KEY=your-ses-secret-key
+FROM_EMAIL=noreply@yourdomain.com
 ```
 
 ### 기타 설정

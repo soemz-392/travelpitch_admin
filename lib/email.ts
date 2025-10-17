@@ -7,18 +7,41 @@ export class EmailService {
   private lastSent: number = 0;
 
   constructor() {
-    // 이메일 서비스 설정 (SendGrid 또는 SES)
-     this.transporter = nodemailer.createTransport({
-      service: process.env.EMAIL_PROVIDER === 'sendgrid' ? 'SendGrid' : 'SES',
-      auth: {
-        user: process.env.EMAIL_PROVIDER === 'sendgrid' 
-          ? 'apikey' 
-          : process.env.SES_ACCESS_KEY_ID,
-        pass: process.env.EMAIL_PROVIDER === 'sendgrid'
-          ? process.env.SENDGRID_API_KEY
-          : process.env.SES_SECRET_ACCESS_KEY,
-      },
-    });
+    const emailProvider = process.env.EMAIL_PROVIDER || 'naver';
+    
+    // 이메일 서비스 설정
+    if (emailProvider === 'naver') {
+      // 네이버 SMTP 설정
+      this.transporter = nodemailer.createTransport({
+        host: 'smtp.naver.com',
+        port: 465,
+        secure: true, // SSL
+        auth: {
+          user: process.env.NAVER_EMAIL,
+          pass: process.env.NAVER_EMAIL_PASSWORD, // 앱 비밀번호 사용 권장
+        },
+      });
+    } else if (emailProvider === 'sendgrid') {
+      // SendGrid 설정
+      this.transporter = nodemailer.createTransport({
+        service: 'SendGrid',
+        auth: {
+          user: 'apikey',
+          pass: process.env.SENDGRID_API_KEY,
+        },
+      });
+    } else if (emailProvider === 'ses') {
+      // AWS SES 설정
+      this.transporter = nodemailer.createTransport({
+        service: 'SES',
+        auth: {
+          user: process.env.SES_ACCESS_KEY_ID,
+          pass: process.env.SES_SECRET_ACCESS_KEY,
+        },
+      });
+    } else {
+      throw new Error(`Unsupported email provider: ${emailProvider}`);
+    }
 
     this.rateLimit = parseInt(process.env.EMAIL_RATE_LIMIT_PER_MINUTE || '50');
   }
@@ -33,7 +56,7 @@ export class EmailService {
     await this.enforceRateLimit();
 
     const mailOptions = {
-      from: process.env.FROM_EMAIL || 'noreply@example.com',
+      from: process.env.FROM_EMAIL || process.env.NAVER_EMAIL || 'noreply@example.com',
       to,
       subject,
       html,
