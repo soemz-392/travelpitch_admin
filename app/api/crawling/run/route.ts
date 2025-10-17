@@ -80,11 +80,13 @@ export async function POST(request: NextRequest) {
 
     const csv = Papa.unparse(csvData, {
       header: true,
-      encoding: 'utf-8',
     });
 
+    // UTF-8 BOM 추가 (Excel에서 한글 깨짐 방지)
+    const csvWithBOM = '\uFEFF' + csv;
+
     // CSV 파일로 반환
-    return new NextResponse(csv, {
+    return new NextResponse(csvWithBOM, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
