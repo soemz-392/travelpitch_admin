@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "init-firestore": "node scripts/init-firestore.js",
+    "init-email": "node scripts/init-email-data.js"
   },
   "dependencies": {
     "@firebase/firestore": "^4.1.0",

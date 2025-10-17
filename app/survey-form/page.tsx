@@ -80,19 +80,17 @@ export default function SurveyFormPage() {
     }
 
     try {
-      const submissionData: SurveySubmission = {
-        id: Date.now().toString(),
+      toast.loading('제출 중...', { id: 'submit' });
+
+      const submissionData = {
         influencerEmail: formData.email,
         naverId: formData.naverId,
         name: formData.name,
         country: formData.country,
         days: parseInt(formData.days),
-        desiredStartDate: new Date(formData.desiredStartDate),
-        expectedPostDate: new Date(formData.expectedPostDate),
+        desiredStartDate: formData.desiredStartDate,
+        expectedPostDate: formData.expectedPostDate,
         adDisclosureAgree: formData.adDisclosureAgree,
-        createdAt: { toDate: () => new Date() } as any,
-        updatedAt: { toDate: () => new Date() } as any,
-        // 추가 정보
         phone: formData.phone,
         phoneModel: formData.phoneModel,
         snsLink: formData.snsLink,

@@ -33,54 +33,26 @@ export default function EmailPage() {
 
   const fetchData = async () => {
     try {
-      // TODO: 실제 데이터 로딩 구현
-      setTemplates([
-        {
-          id: '1',
-          name: '제휴 제안 템플릿',
-          subject: '[제휴 제안] {name}님, 해외 여행 유심 서비스 제안드립니다',
-          body: '안녕하세요 {name}님,\n\n블로그 "{blogName}"을 통해 귀하를 알게 되었습니다.\n\n해외 여행 유심 서비스 제휴를 제안드립니다.\n\n자세한 내용은 첨부 파일을 참고해 주세요.\n\n설문 참여: {surveyUrl}\n\n감사합니다.',
-          type: 'proposal',
-          variables: ['name', 'blogName', 'surveyUrl'],
-          isActive: true,
-          createdAt: new Date() as any,
-          updatedAt: new Date() as any,
-        },
-      ]);
+      // 템플릿 조회
+      const templatesResponse = await fetch('/api/email/templates');
+      if (templatesResponse.ok) {
+        const templatesData = await templatesResponse.json();
+        setTemplates(templatesData);
+      }
 
-      setCampaigns([
-        {
-          id: '1',
-          type: 'proposal',
-          templateId: '1',
-          attachmentId: 'proposal.pdf',
-          recipients: ['example1@naver.com', 'example2@naver.com'],
-          status: 'sent',
-          rateLimit: 50,
-          createdBy: 'admin@example.com',
-          createdAt: { toDate: () => new Date() } as any,
-          updatedAt: { toDate: () => new Date() } as any,
-        },
-      ]);
+      // 캠페인 조회
+      const campaignsResponse = await fetch('/api/email/campaigns');
+      if (campaignsResponse.ok) {
+        const campaignsData = await campaignsResponse.json();
+        setCampaigns(campaignsData);
+      }
 
-      setEmailLogs([
-        {
-          id: '1',
-          recipientEmail: 'example1@naver.com',
-          campaignId: '1',
-          providerMsgId: 'msg_123',
-          status: 'sent',
-          ts: { toDate: () => new Date() } as any,
-        },
-        {
-          id: '2',
-          recipientEmail: 'example2@naver.com',
-          campaignId: '1',
-          providerMsgId: 'msg_124',
-          status: 'open',
-          ts: { toDate: () => new Date() } as any,
-        },
-      ]);
+      // 이메일 로그 조회
+      const logsResponse = await fetch('/api/email/logs');
+      if (logsResponse.ok) {
+        const logsData = await logsResponse.json();
+        setEmailLogs(logsData);
+      }
     } catch (error) {
       console.error('Failed to fetch data:', error);
       toast.error('데이터 로딩 실패');
@@ -92,50 +64,116 @@ export default function EmailPage() {
   const handleCreateCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // TODO: 실제 API 호출
-      const campaign: EmailCampaign = {
-        id: Date.now().toString(),
-        type: 'proposal',
-        templateId: newCampaign.templateId,
-        attachmentId: newCampaign.attachmentId || undefined,
-        recipients: selectedRecipients,
-        status: 'draft',
-        rateLimit: newCampaign.rateLimit,
-        createdBy: 'admin@example.com',
-        createdAt: new Date() as any,
-        updatedAt: new Date() as any,
-      };
+      const response = await fetch('/api/email/campaigns', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newCampaign.name,
+          type: 'proposal',
+          templateId: newCampaign.templateId,
+          attachmentId: newCampaign.attachmentId || undefined,
+          recipients: selectedRecipients,
+          rateLimit: newCampaign.rateLimit,
+          createdBy: 'admin@example.com',
+        }),
+      });
 
-      setCampaigns([...campaigns, campaign]);
-      setNewCampaign({ name: '', templateId: '', attachmentId: '', rateLimit: 50 });
-      setSelectedRecipients([]);
-      setShowCampaignForm(false);
-      toast.success('캠페인이 생성되었습니다.');
+      if (response.ok) {
+        const result = await response.json();
+        setCampaigns([...campaigns, result.campaign]);
+        setNewCampaign({ name: '', templateId: '', attachmentId: '', rateLimit: 50 });
+        setSelectedRecipients([]);
+        setShowCampaignForm(false);
+        toast.success('캠페인이 생성되었습니다.');
+        fetchData();
+      } else {
+        const error = await response.json();
+        toast.error(error.error || '캠페인 생성 실패');
+      }
     } catch (error) {
+      console.error('Failed to create campaign:', error);
       toast.error('캠페인 생성 실패');
     }
   };
 
   const handleSendCampaign = async (campaignId: string) => {
     try {
-      // TODO: 실제 발송 API 호출
-      setCampaigns(campaigns.map(campaign => 
-        campaign.id === campaignId ? { ...campaign, status: 'sending' } : campaign
-      ));
-      toast.success('이메일 발송이 시작되었습니다.');
+      const campaign = campaigns.find(c => c.id === campaignId);
+      if (!campaign) {
+        toast.error('캠페인을 찾을 수 없습니다');
+        return;
+      }
+
+      // 캠페인 상태를 sending으로 업데이트
+      const updateResponse = await fetch(`/api/email/campaigns/${campaignId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'sending' }),
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update campaign status');
+      }
+
+      toast.loading('이메일 발송 중...', { id: 'sending' });
+
+      // 실제 이메일 발송
+      const sendResponse = await fetch('/api/email/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          campaignId,
+          recipients: campaign.recipients,
+          templateId: campaign.templateId,
+          variables: campaign.recipients.map(email => ({
+            name: email.split('@')[0],
+            blogName: 'Your Blog',
+            surveyUrl: `${window.location.origin}/survey-form`,
+          })),
+        }),
+      });
+
+      if (sendResponse.ok) {
+        const result = await sendResponse.json();
+        toast.success(`이메일 발송 완료! 성공: ${result.sent}, 실패: ${result.failed}`, { id: 'sending' });
+        fetchData();
+      } else {
+        const error = await sendResponse.json();
+        toast.error(error.error || '발송 실패', { id: 'sending' });
+      }
     } catch (error) {
-      toast.error('발송 실패');
+      console.error('Failed to send campaign:', error);
+      toast.error('발송 실패', { id: 'sending' });
     }
   };
 
   const handlePauseCampaign = async (campaignId: string) => {
     try {
-      // TODO: 실제 일시정지 API 호출
-      setCampaigns(campaigns.map(campaign => 
-        campaign.id === campaignId ? { ...campaign, status: 'draft' } : campaign
-      ));
-      toast.success('캠페인이 일시정지되었습니다.');
+      const response = await fetch(`/api/email/campaigns/${campaignId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'draft' }),
+      });
+
+      if (response.ok) {
+        setCampaigns(campaigns.map(campaign => 
+          campaign.id === campaignId ? { ...campaign, status: 'draft' } : campaign
+        ));
+        toast.success('캠페인이 일시정지되었습니다.');
+      } else {
+        const error = await response.json();
+        toast.error(error.error || '일시정지 실패');
+      }
     } catch (error) {
+      console.error('Failed to pause campaign:', error);
       toast.error('일시정지 실패');
     }
   };

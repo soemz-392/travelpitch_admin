@@ -34,65 +34,26 @@ export default function DispatchPage() {
 
   const fetchData = async () => {
     try {
-      // TODO: 실제 데이터 로딩 구현
-      setSubmissions([
-        {
-          id: '1',
-          influencerEmail: 'example1@naver.com',
-          naverId: 'jdh11830',
-          name: '홍길동',
-          country: 'JP',
-          days: 7,
-          desiredStartDate: new Date('2024-01-15'),
-          expectedPostDate: new Date('2024-01-20'),
-          adDisclosureAgree: true,
-          createdAt: new Date() as any,
-          updatedAt: new Date() as any,
-        },
-        {
-          id: '2',
-          influencerEmail: 'example2@naver.com',
-          naverId: 'traveler_kr',
-          name: '김여행',
-          country: 'TW',
-          days: 5,
-          desiredStartDate: new Date('2024-01-20'),
-          expectedPostDate: new Date('2024-01-25'),
-          adDisclosureAgree: true,
-          createdAt: new Date() as any,
-          updatedAt: new Date() as any,
-        },
-      ]);
+      // 설문 제출 조회
+      const submissionsResponse = await fetch('/api/survey-submissions');
+      if (submissionsResponse.ok) {
+        const submissionsData = await submissionsResponse.json();
+        setSubmissions(submissionsData);
+      }
 
-      setBatches([
-        {
-          id: '1',
-          submissionIds: ['1', '2'],
-          fileUrl: 'https://example.com/batch1.xlsx',
-          status: 'downloaded',
-          processedAt: { toDate: () => new Date() } as any,
-          createdAt: { toDate: () => new Date() } as any,
-        },
-      ]);
+      // 발송 배치 조회
+      const batchesResponse = await fetch('/api/dispatch/batches');
+      if (batchesResponse.ok) {
+        const batchesData = await batchesResponse.json();
+        setBatches(batchesData);
+      }
 
-      setMappings([
-        {
-          id: '1',
-          country: 'JP',
-          simType: 'esim',
-          planName: 'KDDI 7일',
-          days: 7,
-          sellerProductCode: 'ESAZB-JPKD007D_003GD',
-        },
-        {
-          id: '2',
-          country: 'TW',
-          simType: 'esim',
-          planName: 'Chunghwa 5일',
-          days: 5,
-          sellerProductCode: 'ESAZB-TWCH005D_003GD',
-        },
-      ]);
+      // 상품 매핑 조회
+      const mappingsResponse = await fetch('/api/product-mappings');
+      if (mappingsResponse.ok) {
+        const mappingsData = await mappingsResponse.json();
+        setMappings(mappingsData);
+      }
     } catch (error) {
       console.error('Failed to fetch data:', error);
       toast.error('데이터 로딩 실패');
@@ -124,99 +85,91 @@ export default function DispatchPage() {
     }
 
     try {
-      // 선택된 설문 데이터 가져오기
-      const selectedData = submissions.filter(submission => 
-        selectedSubmissions.includes(submission.id)
-      );
+      toast.loading('엑셀 파일 생성 중...', { id: 'excel-gen' });
 
-      // XLSX 형태로 변환 (자사몰 업로드 포맷)
-      const xlsxData = selectedData.map((submission, index) => ({
-        '상품주문번호 / 주문번호': `RV${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${String(index + 1).padStart(3, '0')}`,
-        '배송방법': '배송없음',
-        '택배사/송장번호': '',
-        '발송일': new Date().toISOString().slice(0, 10),
-        '구매자명/ID/수취인명': submission.name,
-        '주문상태/주문세부상태': '발송대기/신규주문',
-        '결제위치/결제일': 'MOBILE / ' + new Date().toISOString().slice(0, 10),
-        '상품번호/상품명': 'ESAZB-JPKD007D_003GD', // 매핑 테이블에서 가져와야 함
-        '상품종류': '조합형옵션상품',
-        '옵션정보1(연락처)': '',
-        '옵션정보2(이메일)': submission.influencerEmail,
-        '옵션정보3(출국일)': '',
-        '옵션정보4(귀국일)': '',
-        '옵션정보5(개통희망일)': submission.desiredStartDate.toISOString().slice(0, 10),
-        '옵션정보6(수령방법)': '배송없음',
-        '옵션정보7(요금플랜)': 'KDDI 7일',
-        '옵션정보8(이용일수)': submission.days,
-        '옵션정보9': '',
-        '옵션정보10': '',
-        '옵션관리코드': 'ESAZB-JPKD007D_003GD',
-        '수량': 1,
-        '가격': 0,
-        '할인액': 0,
-        '수취인연락처': '',
-        '수취인주소': '',
-        '우편번호': '',
-        '배송메세지': '',
-        '출고지': '',
-        '결제수단': 'MOBILE',
-        '개인통관고유부호': '',
-        '주문일시': new Date().toISOString().slice(0, 19).replace('T', ' '),
-        '판매채널': '스마트스토어',
-      }));
+      const response = await fetch('/api/dispatch/excel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          submissionIds: selectedSubmissions,
+        }),
+      });
 
-      // CSV 형태로 다운로드 (XLSX 라이브러리 없이)
-      const csvData = [
-        Object.keys(xlsxData[0]),
-        ...xlsxData.map(row => Object.values(row))
-      ];
-
-      const csvContent = csvData.map(row => row.join(',')).join('\n');
-      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `dispatch_${new Date().toISOString().slice(0, 10)}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // 배치 생성
-      const batch: DispatchBatch = {
-        id: Date.now().toString(),
-        submissionIds: selectedSubmissions,
-        status: 'ready',
-        createdAt: { toDate: () => new Date() } as any,
-      };
-
-      setBatches([...batches, batch]);
-      toast.success('엑셀 파일이 생성되었습니다.');
+      if (response.ok) {
+        const result = await response.json();
+        toast.success(`엑셀 파일이 생성되었습니다 (${result.submissionCount}건)`, { id: 'excel-gen' });
+        
+        // 배치 목록 새로고침
+        fetchData();
+        
+        // 선택 초기화
+        setSelectedSubmissions([]);
+      } else {
+        const error = await response.json();
+        toast.error(error.error || '엑셀 생성 실패', { id: 'excel-gen' });
+      }
     } catch (error) {
-      toast.error('엑셀 생성 실패');
+      console.error('Failed to generate excel:', error);
+      toast.error('엑셀 생성 실패', { id: 'excel-gen' });
     }
   };
 
   const handleDownloadExcel = async (batchId: string) => {
     try {
-      // TODO: 실제 다운로드 API 호출
-      setBatches(batches.map(batch => 
-        batch.id === batchId ? { ...batch, status: 'downloaded' } : batch
-      ));
-      toast.success('엑셀 파일이 다운로드되었습니다.');
+      toast.loading('다운로드 중...', { id: 'download' });
+      
+      const response = await fetch(`/api/dispatch/excel?batchId=${batchId}`);
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `dispatch_${batchId}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        toast.success('엑셀 파일이 다운로드되었습니다.', { id: 'download' });
+        
+        // 배치 상태 업데이트
+        setBatches(batches.map(batch => 
+          batch.id === batchId ? { ...batch, status: 'downloaded' } : batch
+        ));
+      } else {
+        const error = await response.json();
+        toast.error(error.error || '다운로드 실패', { id: 'download' });
+      }
     } catch (error) {
-      toast.error('다운로드 실패');
+      console.error('Failed to download excel:', error);
+      toast.error('다운로드 실패', { id: 'download' });
     }
   };
 
   const handleMarkAsProcessed = async (batchId: string) => {
     try {
-      // TODO: 실제 처리 완료 API 호출
-      setBatches(batches.map(batch => 
-        batch.id === batchId ? { ...batch, status: 'done', processedAt: new Date() as any } : batch
-      ));
-      toast.success('발송 처리가 완료되었습니다.');
+      const response = await fetch(`/api/dispatch/batches/${batchId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'done' }),
+      });
+
+      if (response.ok) {
+        setBatches(batches.map(batch => 
+          batch.id === batchId ? { ...batch, status: 'done', processedAt: new Date() as any } : batch
+        ));
+        toast.success('발송 처리가 완료되었습니다.');
+      } else {
+        const error = await response.json();
+        toast.error(error.error || '처리 완료 실패');
+      }
     } catch (error) {
+      console.error('Failed to mark as processed:', error);
       toast.error('처리 완료 실패');
     }
   };
@@ -224,21 +177,26 @@ export default function DispatchPage() {
   const handleCreateMapping = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // TODO: 실제 API 호출
-      const mapping: ProductMapping = {
-        id: Date.now().toString(),
-        country: newMapping.country,
-        simType: newMapping.simType,
-        planName: newMapping.planName,
-        days: newMapping.days,
-        sellerProductCode: newMapping.sellerProductCode,
-      };
+      const response = await fetch('/api/product-mappings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newMapping),
+      });
 
-      setMappings([...mappings, mapping]);
-      setNewMapping({ country: '', simType: 'esim', planName: '', days: 0, sellerProductCode: '' });
-      setShowMappingForm(false);
-      toast.success('매핑이 생성되었습니다.');
+      if (response.ok) {
+        const result = await response.json();
+        setMappings([...mappings, result.mapping]);
+        setNewMapping({ country: '', simType: 'esim', planName: '', days: 0, sellerProductCode: '' });
+        setShowMappingForm(false);
+        toast.success('매핑이 생성되었습니다.');
+      } else {
+        const error = await response.json();
+        toast.error(error.error || '매핑 생성 실패');
+      }
     } catch (error) {
+      console.error('Failed to create mapping:', error);
       toast.error('매핑 생성 실패');
     }
   };
@@ -247,10 +205,19 @@ export default function DispatchPage() {
     if (!confirm('정말 삭제하시겠습니까?')) return;
     
     try {
-      // TODO: 실제 API 호출
-      setMappings(mappings.filter(mapping => mapping.id !== mappingId));
-      toast.success('매핑이 삭제되었습니다.');
+      const response = await fetch(`/api/product-mappings/${mappingId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setMappings(mappings.filter(mapping => mapping.id !== mappingId));
+        toast.success('매핑이 삭제되었습니다.');
+      } else {
+        const error = await response.json();
+        toast.error(error.error || '삭제 실패');
+      }
     } catch (error) {
+      console.error('Failed to delete mapping:', error);
       toast.error('삭제 실패');
     }
   };
