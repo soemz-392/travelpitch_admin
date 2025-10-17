@@ -144,19 +144,62 @@ NAVER_SEARCH_LIMIT=50
 3. 크롤링 실행
 
 ### 3. 이메일 발송
-1. 이메일 발송 페이지에서 캠페인 생성
-2. 템플릿 선택 및 수신자 설정
-3. 배치 발송 실행
+1. 초기 데이터 생성 (최초 1회만)
+   ```bash
+   npm run init-email
+   ```
+2. 이메일 템플릿 관리
+   - `/email` 페이지에서 템플릿 확인
+   - 변수 사용: `{name}`, `{blogName}`, `{surveyUrl}`
+3. 캠페인 생성 및 발송
+   - 템플릿 선택
+   - 수신자 이메일 입력 (쉼표로 구분)
+   - 발송 버튼 클릭
+4. 발송 로그 확인
+   - 발송 성공/실패 상태
+   - 열람/클릭 추적
 
 ### 4. 설문 관리
 1. 설문 제출 현황 확인
 2. 발송 대상 선택
 3. 엑셀 생성 및 다운로드
 
-### 5. 링크 추적
+### 5. 발송 관리
+1. 상품 매핑 설정 (국가 + 일수 → 상품코드)
+2. 설문 선택 후 엑셀 생성
+3. 자사몰에 업로드
+4. 처리 완료 체크
+
+### 6. 링크 추적
 1. 발송 완료 후 링크 자동 생성
 2. 클릭률 및 성과 모니터링
 3. 필요시 재발송
+
+## API 엔드포인트
+
+### 이메일 관련
+- `GET /api/email/templates` - 템플릿 목록
+- `POST /api/email/templates` - 템플릿 생성
+- `GET /api/email/campaigns` - 캠페인 목록
+- `POST /api/email/campaigns` - 캠페인 생성
+- `PATCH /api/email/campaigns/[id]` - 캠페인 상태 업데이트
+- `POST /api/email/send` - 이메일 발송
+- `GET /api/email/logs` - 발송 로그 조회
+
+### 설문 관련
+- `GET /api/survey-submissions` - 설문 목록
+- `POST /api/survey-submissions` - 설문 제출
+
+### 발송 관리
+- `GET /api/dispatch/batches` - 배치 목록
+- `POST /api/dispatch/excel` - 엑셀 생성
+- `GET /api/dispatch/excel?batchId=xxx` - 엑셀 다운로드
+- `PATCH /api/dispatch/batches/[id]` - 배치 상태 업데이트
+
+### 상품 매핑
+- `GET /api/product-mappings` - 매핑 목록
+- `POST /api/product-mappings` - 매핑 생성
+- `DELETE /api/product-mappings/[id]` - 매핑 삭제
 
 ## 보안 및 컴플라이언스
 
@@ -165,6 +208,8 @@ NAVER_SEARCH_LIMIT=50
 - 수신거부 링크 포함
 - 광고성 표기 문구 포함
 - 개인정보 보호 정책 준수
+- Firebase Security Rules 적용
+- API Rate Limiting
 
 ## 문제 해결
 
