@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import AuthGuard from '@/components/AuthGuard';
 import MainLayout from '@/components/Layout/MainLayout';
-import { KeywordSet, CrawlResult, Influencer } from '@/types';
+import { KeywordSet, Influencer } from '@/types';
 import {
   PlusIcon,
   PlayIcon,
@@ -16,7 +16,6 @@ import toast from 'react-hot-toast';
 
 export default function CrawlingPage() {
   const [keywordSets, setKeywordSets] = useState<KeywordSet[]>([]);
-  const [crawlResults, setCrawlResults] = useState<CrawlResult[]>([]);
   const [influencers, setInfluencers] = useState<Influencer[]>([]);
   const [loading, setLoading] = useState(true);
   const [showKeywordForm, setShowKeywordForm] = useState(false);
@@ -45,48 +44,6 @@ export default function CrawlingPage() {
       if (response.ok) {
         const keywordSetsData = await response.json();
         setKeywordSets(keywordSetsData);
-      } else {
-        // API 실패 시 샘플 데이터 사용
-        setKeywordSets([
-          {
-            id: 'test-1',
-            name: '일본 유심',
-            country: 'JP',
-            keywords: ['일본', '유심', '여행'],
-            isActive: true,
-            createdAt: { toDate: () => new Date() } as any,
-            updatedAt: { toDate: () => new Date() } as any,
-          }
-        ]);
-      }
-
-      // 크롤링 결과 로딩
-      const crawlResponse = await fetch('/api/crawl-results');
-      if (crawlResponse.ok) {
-        const crawlResultsData = await crawlResponse.json();
-        setCrawlResults(crawlResultsData);
-      } else {
-        // API 실패 시 샘플 데이터 사용
-        setCrawlResults([
-          {
-            id: '1',
-            keywordSetId: 'test-1',
-            url: 'https://blog.naver.com/example1',
-            title: '일본 여행기 - 유심 사용 후기',
-            emails: ['example1@naver.com'],
-            capturedAt: { toDate: () => new Date() } as any,
-            dedupKey: 'blog.naver.com/example1',
-          },
-          {
-            id: '2',
-            keywordSetId: 'test-1',
-            url: 'https://blog.naver.com/example2',
-            title: '일본 유심 추천 및 사용법',
-            emails: ['example2@naver.com', 'contact@example2.com'],
-            capturedAt: { toDate: () => new Date() } as any,
-            dedupKey: 'blog.naver.com/example2',
-          },
-        ]);
       }
 
       // 인플루언서 로딩
@@ -190,7 +147,13 @@ export default function CrawlingPage() {
 
   const handleRunCrawling = async (keywordSetId: string) => {
     try {
-      toast.loading('크롤링 실행 중...', { id: 'crawling' });
+      const keywordSet = keywordSets.find(set => set.id === keywordSetId);
+      if (!keywordSet) {
+        toast.error('키워드 세트를 찾을 수 없습니다');
+        return;
+      }
+
+      toast.loading('크롤링 실행 중... 완료 후 CSV 파일이 자동 다운로드됩니다.', { id: 'crawling' });
       
       const response = await fetch('/api/crawling/run', {
         method: 'POST',
@@ -201,16 +164,37 @@ export default function CrawlingPage() {
       });
 
       if (response.ok) {
-        const result = await response.json();
-        toast.success(`크롤링이 완료되었습니다. ${result.resultsCount}개 결과를 찾았습니다.`, { id: 'crawling' });
+        // CSV 파일 다운로드
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        
+        // 파일명 생성
+        const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+        a.download = `${keywordSet.name}_${today}.csv`;
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        toast.success(`크롤링 완료! CSV 파일이 다운로드되었습니다.`, { id: 'crawling' });
+        
         // 데이터 새로고침
         fetchData();
       } else {
-        const errorData = await response.json();
-        console.error('Crawling error:', errorData);
-        const errorMsg = errorData.details 
-          ? `${errorData.error}: ${errorData.details}` 
-          : errorData.error || '크롤링 시작 실패';
+        const errorText = await response.text();
+        let errorMsg = '크롤링 실패';
+        try {
+          const errorData = JSON.parse(errorText);
+          console.error('Crawling error:', errorData);
+          errorMsg = errorData.details 
+            ? `${errorData.error}: ${errorData.details}` 
+            : errorData.error || '크롤링 시작 실패';
+        } catch (e) {
+          console.error('Error parsing error response:', errorText);
+        }
         toast.error(errorMsg, { id: 'crawling' });
       }
     } catch (error) {
@@ -421,61 +405,24 @@ export default function CrawlingPage() {
             </div>
           </div>
 
-          {/* 크롤링 결과 */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                크롤링 결과
-              </h3>
-              <div className="overflow-hidden">
-                <table className="table">
-                  <thead className="table-header">
-                    <tr>
-                      <th className="table-header-cell">URL</th>
-                      <th className="table-header-cell">제목</th>
-                      <th className="table-header-cell">이메일</th>
-                      <th className="table-header-cell">수집일</th>
-                      <th className="table-header-cell">작업</th>
-                    </tr>
-                  </thead>
-                  <tbody className="table-body">
-                    {crawlResults.map((result) => (
-                      <tr key={result.id}>
-                        <td className="table-cell">
-                          <a
-                            href={result.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-900 truncate max-w-xs block"
-                          >
-                            {result.url}
-                          </a>
-                        </td>
-                        <td className="table-cell">{result.title}</td>
-                        <td className="table-cell">
-                          <div className="space-y-1">
-                            {result.emails.map((email, index) => (
-                              <div key={index} className="text-sm text-gray-600">
-                                {email}
-                              </div>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="table-cell">
-                          {result.capturedAt?.toDate ? result.capturedAt.toDate().toLocaleDateString() : '날짜 없음'}
-                        </td>
-                        <td className="table-cell">
-                          <button
-                            className="text-blue-600 hover:text-blue-900"
-                            title="상세 보기"
-                          >
-                            <EyeIcon className="h-4 w-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          {/* 크롤링 사용 안내 */}
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">크롤링 사용 방법</h3>
+                <div className="mt-2 text-sm text-blue-700">
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>키워드 세트의 <strong>▶ 버튼</strong>을 클릭하면 크롤링이 시작됩니다</li>
+                    <li>크롤링 완료 후 <strong>CSV 파일이 자동 다운로드</strong>됩니다</li>
+                    <li>파일명: <code className="bg-blue-100 px-1 rounded">키워드세트명_YYYYMMDD.csv</code></li>
+                    <li>CSV에는 키워드 세트, 블로그 URL, 제목, 이메일, 수집일이 포함됩니다</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>

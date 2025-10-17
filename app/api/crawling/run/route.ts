@@ -3,6 +3,7 @@ import { CrawlingService } from '@/lib/crawling';
 import { adminDb } from '@/lib/firebase-admin';
 import { KeywordSet, CrawlResult } from '@/types';
 import * as admin from 'firebase-admin';
+import Papa from 'papaparse';
 
 // Vercel Function 설정: 메모리와 실행 시간 증가
 export const maxDuration = 60; // 최대 60초
@@ -48,42 +49,47 @@ export async function POST(request: NextRequest) {
 
     // 크롤링 실행
     const crawlingService = new CrawlingService();
-    await crawlingService.initialize();
-
-    try {
-      const results = await crawlingService.crawlGoogleBlogs(keywordSet);
-      
-      // 결과 저장
-      if (results.length > 0) {
-        const batch = adminDb.batch();
-        results.forEach(result => {
-          const docRef = adminDb.collection('crawlResults').doc();
-          batch.set(docRef, {
-            ...result,
-            keywordSetId,
-            capturedAt: admin.firestore.Timestamp.now(),
-          });
+    const results = await crawlingService.crawlGoogleBlogs(keywordSet);
+    
+    // 결과 저장
+    if (results.length > 0) {
+      const batch = adminDb.batch();
+      results.forEach(result => {
+        const docRef = adminDb.collection('crawlResults').doc();
+        batch.set(docRef, {
+          ...result,
+          keywordSetId,
+          capturedAt: admin.firestore.Timestamp.now(),
         });
-        
-        await batch.commit();
-      }
-      await crawlingService.close();
-
-      return NextResponse.json({ 
-        success: true, 
-        resultsCount: results.length,
-        results: results.map(r => ({
-          id: r.id,
-          url: r.url,
-          title: r.title,
-          emails: r.emails,
-        }))
       });
-
-    } catch (error) {
-      await crawlingService.close();
-      throw error;
+      
+      await batch.commit();
     }
+
+    // CSV 생성
+    const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    const filename = `${keywordSet.name}_${today}.csv`;
+    
+    const csvData = results.map(r => ({
+      '키워드 세트': keywordSet.name,
+      '블로그 URL': r.url,
+      '제목': r.title,
+      '이메일': r.emails.join(', '),
+      '수집일': new Date().toLocaleDateString('ko-KR'),
+    }));
+
+    const csv = Papa.unparse(csvData, {
+      header: true,
+      encoding: 'utf-8',
+    });
+
+    // CSV 파일로 반환
+    return new NextResponse(csv, {
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
+      },
+    });
 
   } catch (error: any) {
     console.error('Crawling API error:', error);
