@@ -27,7 +27,6 @@ export class SchedulerService {
 
       // 각 키워드 세트에 대해 크롤링 실행
       const crawlingService = new CrawlingService();
-      await crawlingService.initialize();
 
       let totalResults = 0;
 
@@ -58,8 +57,6 @@ export class SchedulerService {
           console.error(`Error crawling keyword set ${keywordSet.name}:`, error);
         }
       }
-
-      await crawlingService.close();
 
       console.log(`Weekly crawling completed. Total results: ${totalResults}`);
 
