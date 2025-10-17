@@ -6,10 +6,10 @@ export const dynamic = 'force-dynamic';
 // DELETE: 상품 매핑 삭제
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     await adminDb.collection('productMappings').doc(id).delete();
     return NextResponse.json({ success: true });
   } catch (error) {
